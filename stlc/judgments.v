@@ -4,6 +4,26 @@ Require Import syntax.
 (* Helpers *)
 Section helpers.
 
+Inductive freeVar (x1 : termId) : term -> Prop :=
+| freeEvar :
+    forall x2,
+    x1 = x2 ->
+    freeVar x1 (evar x2)
+| freeAbs :
+    forall x2 t e,
+    x1 <> x2 ->
+    freeVar x1 e ->
+    freeVar x1 (eabs x2 t e)
+| freeApp1 :
+    forall e1 e2,
+    freeVar x1 e1 ->
+    freeVar x1 (eapp e2 e1)
+| freeApp2 :
+    forall e1 e2,
+    freeVar x1 e2 ->
+    freeVar x1 (eapp e2 e1).
+
+(* Proves either equality or inequality of identifiers. *)
 Theorem eqId :
   forall (idT : idType) (x1 : id idT) (x2 : id idT),
   {x1 = x2} + {x1 <> x2}.
@@ -30,22 +50,6 @@ Fixpoint lookupEvar (c1 : context) (x1 : termId) :=
     | left _ => Some t
     | right _ => lookupEvar c2 x1
     end
-  end.
-
-Fixpoint varIsFreeInTerm (x1 : termId) (e1 : term) :=
-  match e1 with
-  | eunit => false
-  | evar x2 =>
-    match eqId idTerm x1 x2 with
-    | left _ => true
-    | right _ => false
-    end
-  | eabs x2 t e2 =>
-    match eqId idTerm x1 x2 with
-    | left _ => false
-    | right _ => varIsFreeInTerm x1 e2
-    end
-  | eapp e2 e3 => orb (varIsFreeInTerm x1 e2) (varIsFreeInTerm x1 e3)
   end.
 
 Fixpoint subst (e1 : term) (x1 : termId) (e2 : term) :=
