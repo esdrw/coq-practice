@@ -107,3 +107,13 @@ Inductive step : term -> term -> Prop :=
     value e1 ->
     step e2 e3 ->
     step (eapp e1 e2) (eapp e1 e3).
+
+Inductive bigstep : term -> term -> Prop :=
+| bigRefl :
+    forall e,
+    bigstep e e
+| bigInd :
+    forall e1 e2 e3,
+    bigstep e1 e2 ->
+    step e2 e3 ->
+    bigstep e1 e3.

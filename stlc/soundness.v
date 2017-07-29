@@ -351,4 +351,43 @@ Proof.
       assumption.
 Qed.
 
+Lemma bigstepPreservation :
+  forall e1 e2 t1,
+  hasType cempty e1 t1 ->
+  bigstep e1 e2 ->
+  hasType cempty e2 t1.
+Proof.
+  intros e1 e2 t1 H1 H2.
+  induction H2 as [
+                      (* bigRefl *)
+  | e1 e2 e3 H2 IH H3 (* bigInd  *)
+  ].
+  - assumption.
+  - apply preservation with (e1 := e2).
+    + apply IH.
+      assumption.
+    + assumption.
+Qed.
+
+(* No well-typed program will get stuck. *)
+Theorem soundness :
+  forall e1 e2 t1,
+  hasType cempty e1 t1 ->
+  bigstep e1 e2 ->
+  (exists e3, step e2 e3) \/
+  value e2.
+Proof.
+  intros e1 e2 t1 H1 H2.
+  induction H2 as [
+                      (* bigRefl *)
+  | e1 e2 e3 H2 IH H3 (* bigInd  *)
+  ].
+  - apply progress with (t := t1).
+    assumption.
+  - apply progress with (t := t1).
+    apply bigstepPreservation with (e1 := e1).
+    + assumption.
+    + apply bigInd with (e2 := e2); assumption.
+Qed.
+
 (* Optional: determinism *)
