@@ -140,10 +140,54 @@ End ComposedFunctors.
 (***************************)
 
 Module Type NaturalTransformation (C D : Category) (F G : Functor C D).
-  Parameter eta : forall { a b }, C.object -> D.morphism a b.
+  Parameter fn : forall { a b }, C.object -> D.morphism a b.
 
   Axiom commute :
     forall a b (f : C.morphism a b),
-    D.compose (eta b) (F.morph f) =
-    D.compose (G.morph f) (eta a).
+    D.compose (fn b) (F.morph f) =
+    D.compose (G.morph f) (fn a).
 End NaturalTransformation.
+
+(*********)
+(* Monad *)
+(*********)
+
+Module Type MonadWrapper (C : Category) (F : Functor C C).
+  (* This structure is necessary because a module cannot be applied to *)
+  (* another module application. *)
+  Module IdFunctor := IdentityFunctor C.
+  Module FSquared := ComposedFunctors C C C F F.
+  Module Type Monad
+    (Eta : NaturalTransformation C C IdFunctor F)
+    (Mu : NaturalTransformation C C FSquared F).
+    Axiom associative :
+      forall x : C.object,
+      @C.compose
+        (F.obj (F.obj (F.obj x)))
+        (F.obj (F.obj x))
+        (F.obj x)
+        (Mu.fn x)
+        (F.morph (Mu.fn x)) =
+      @C.compose
+        (F.obj (F.obj (F.obj x)))
+        (F.obj (F.obj x))
+        (F.obj x)
+        (Mu.fn x)
+        (Mu.fn (F.obj x)).
+
+    Axiom identity :
+      forall (x : C.object),
+      @C.compose
+        (F.obj x)
+        (F.obj (F.obj x))
+        (F.obj x)
+        (Mu.fn x)
+        (Eta.fn (F.obj x)) =
+      @C.compose
+        (F.obj x)
+        (F.obj (F.obj x))
+        (F.obj x)
+        (Mu.fn x)
+        (F.morph (Eta.fn x)).
+  End Monad.
+End MonadWrapper.
